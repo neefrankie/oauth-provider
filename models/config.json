@@ -1,0 +1,10 @@
+{
+    "connectionLimit": 10,
+    "host": "localhost",
+    "user": "sampadm",
+    "password": "secret",
+    "dateStrings": true,
+    "database": "sampdb",
+    "namedPlaceholders": true,
+    "timezone": "Z"
+}

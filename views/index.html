@@ -1,0 +1,29 @@
+{% extends "../layout.html" %}
+
+{% block title %}
+OAuth Authorization Server
+{% endblock %}
+
+{% block content %}
+  <h2>Client information</h2>
+  {% for client in clients%}
+  <ul>
+    <li><b>client_id: </b><code>{{client.client_id}}</code></li>
+    <li><b>client_secret: </b><code>{{client.client_secret}}</code></li>
+    <li><b>scope: </b><code>{{client.scope}}</code></li>
+    <li><b>redirect_uri: </b><code>{{client.redirect_uris | join(", ")}}</code></li>
+  </ul>
+  {% endfor %}
+
+  <h2>Server information</h2>
+  <ul>
+    <li>
+      <b>authorization_endpoint: </b>
+      <code>{{endpoints.authorization}}</code>
+    </li>
+    <li>
+      <b>token_endpoint:</b>
+      <code>{{endpoints.token}}</code>
+    </li>
+  </ul>
+{% endblock %}
