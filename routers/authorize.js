@@ -1,4 +1,4 @@
-const debug = require('debug')('oauth:provider:authorize');
+const debug = require('debug')('routers:authorize');
 const Koa = require('koa');
 const Router = require('koa-router');
 const render = require('../utils/render');
@@ -10,7 +10,7 @@ const keyGen = require('../util/key-gen');
 const router = new Router();
 
 
-router.get('/', async function(ctx, next) {
+router.get('/', async (ctx, next) => {
   /**
    * @type {Object} reqBody
    * @property {string} response_type - 'code'
@@ -34,6 +34,7 @@ router.get('/', async function(ctx, next) {
 
   /**
    * @type {Object}
+   * @property {string} clientName
    * @property {string} callbackUrl
    * @property {boolean} isActive
    */
@@ -65,12 +66,49 @@ router.get('/', async function(ctx, next) {
     }));
   }
 
+  const authCode = await keyGen(10);
+
   ctx.state = {
-    redirectUri: app.callbackUrl,
-    state: reqBody.state
+    clientName: app.clientName, 
+    clientId: reqBody.client_id,
+    redirectUri: reqBody.redirect_uri,
+    state: reqBody.state,
+    authCode,
+    scope: reqBody.scope
   };
 
   ctx.body = await render('approve.html', ctx.state);
+});
+
+router.post('/', async (ctx, next) => {
+  /**
+   * @type {Object} reqBody
+   * @property {string} clientId
+   * @property {string} redirectUri
+   * @property {string} state
+   * @property {string} authCode
+   * @property {string?} approve
+   * @property {string?} deny
+   */
+  const reqBody = ctx.request.body;
+
+  if (reqBody.deny) {
+    return ctx.redirect(buildUrl(reqBody.redirectUri, {
+      error: 'access_denied'
+    }));
+  }
+
+  await store.saveAuthorize({
+    code: reqBody.authCode,
+    redirectUri: reqBody.redirectUri,
+    state: reqBody.state,
+    appId: reqBody.clientId
+  });
+
+  return ctx.redirect(buildUrl(, reqBody.redirectUri, {
+    state: reqBody.state,
+    code: reqBody.authCode
+  }));
 });
 
 module.exports = router.routes();

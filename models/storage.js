@@ -14,7 +14,9 @@ class Storage {
    * @param {string} clientId - the id of an app
    * @param {boolean} isInternal - is this app used internally?
    * @return {Object | null}
+   * @property {string} clientName
    * @property {string} callbackUrl
+   * @property {boolean} isActive
    */
   async loadClient(clientId) {
     const query = sql`

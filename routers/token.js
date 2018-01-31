@@ -1,13 +1,8 @@
-const debug = require('debug')('oauth:provider:token');
+const debug = require('debug')('routers:token');
 const qs = require('querystring');
 const Koa = require('koa');
 const Router = require('koa-router');
-const randstr = require('../utils/randstr');
 const authHeader = require('../utils/auth-header');
-const db = require('../utils/db');
-const {codes, findClient} = require('./data');
-const isLegalScope = require('./is-legal-scope');
-const userInfo = require('./user-info');
 
 const router = new Router();
 

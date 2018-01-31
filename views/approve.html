@@ -6,50 +6,36 @@ OAuth Authorization Server
 
 {% block content %}
   <h2>Approve this client?</h2>
-  {% if client.clientName %}
   <p>
-    <b>Name: </b>
-    <code>{{ client.clientName }}</code>
-  </p>
-  {% endif %}
-
-  <p>
-    <b>ID: </b>
-    <code>{{client.id}}</code>
+    <b>Client Name: </b>
+    <code>{{ clientName }}</code>
   </p>
 
-  {% if client.clientUri %}
   <p>
-    <b>URI: </b>
-    <code>{{client.clientUri }}</code>
+    <b>Client ID: </b>
+    <code>{{clientId}}</code>
   </p>
-  {% endif %}
   
+  <p>
+    <b>Scope: </b>
+    <code>{{scope}}</code>
+  </p>
+
   {% if client.logoUri %}
   <p>
-    <b>logo: </b>
+    <b>Logo: </b>
     <img src="{{client.logoUri}}" alt="">
   </p>
   {% endif %}
 
-  <form class="form" action="/approve" method="POST">
-    <label for="user">Select User:</label>
-    <select name="user" id="user">
-      <option value="alice">Alice</option>
-      <option value="bob">Bob</option>
-    </select>
-    <input type="hidden" name="requestId" value="{{ requestId }}">
-    {% if scope %}
-    <p>The client is requesting access to the following:</p>
-    <ul>
-      {% for s in scope %}
-      <li>
-        <input type="checkbox" name="scope_{{s}}" id="scope_{{s}}" checked="checked">
-        <label for="scope_{{s}}">{{s}}</label>
-      </li>
-      {% endfor %}
-    </ul>
-    {% endif %}
+  <form class="form" action="/authorize" method="POST">
+    <div>
+      <input type="hidden" name="clientId" value="{{clientId}}">
+      <input type="hidden" name="redirectUri" value="{{redirectUri}}">
+      <input type="hidden", value="{{state}}">
+      <input type="hidden" name="authCode" value="{{ authCode }}">
+    </div>
+    
     <input type="submit" class="btn btn-success" name="approve" value="Approve">
     <input type="submit" class="btn btn-danger" name="deny" value="Deny">
   </form>
