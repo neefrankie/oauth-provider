@@ -4,7 +4,7 @@
     "user": "sampadm",
     "password": "secret",
     "dateStrings": true,
-    "database": "sampdb",
+    "database": "backyard",
     "namedPlaceholders": true,
     "timezone": "Z"
 }

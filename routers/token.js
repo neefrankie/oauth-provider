@@ -1,107 +1,102 @@
 const debug = require('debug')('routers:token');
-const qs = require('querystring');
 const Koa = require('koa');
 const Router = require('koa-router');
-const authHeader = require('../utils/auth-header');
+const {store} = require('../models');
+const basicAuth = require('../util/basic-auth');
+const keyGen = require('../util/key-gen');
 
 const router = new Router();
 
 router.post('/', async function(ctx, next) {
   debug('Request token header: %O', ctx.header);
-
-  const auth = ctx.get('authorization');
+  /**
+   * @type {object} reqBody
+   * @property {string} grant_type - must be `authorization_code`
+   * @property {string} code
+   * @property {string?} redirect_uri
+   */
   const reqBody = ctx.request.body;
-  let clientId;
-  let clientSecret;
 
-  // Extract credentials from Authorizatio header
-  debug('Authorization header: %s', auth);
-  if (auth) {
-    const clientCredentials = authHeader.decode(auth);
-    debug('client credentials: %O', clientCredentials);
-
-    clientId = qs.unescape(clientCredentials[0]);
-    clientSecret = qs.unescape(clientCredentials[1]);
-  }
-  debug('clientId: %s, clientSecret: %s', clientId, clientSecret);
-
-  // Find existing client for the requested clientId.
-  const client = findClient(clientId);
-
-  // Validate clientId and clientSecret
-  if (!client) {
-    debug(`Unkonw client ${clientId}`);
-    ctx.status = 401;
-    return ctx.body = {error: 'invalid_client'};
-  }
-
-  if (client.client_secret !== clientSecret) {
-    debug(`Mismatched client secret, expected ${client.client_secret}, got ${clientSecret}`);
-    ctx.status = 401;
-    return ctx.body = {error: 'invalid_client'};
-  }
-
-  // Check grant type
-  if (reqBody.grant_type !== 'authorization_code') {
-    debug(`Unkonw grant type ${reqBody.grant_type}`);
+  if (!reqBody.code || !reqBody.redirect_uri) {
     ctx.status = 400;
-    return ctx.body = {error: 'unsupported_grant_type'};
+    return ctx.body = {
+      error: 'invalid_request'
+    };
   }
 
-  // Check request code
-  const code = codes.get(reqBody.code);
-
-  if (!code) {
-    debug(`Unknow code, ${reqBody.code}`);
-    ctx.status = 400
-    return ctx.body = {error: 'invalid_grant'};
-  }
-
-  codes.delete(reqBody.code);
-
-  if (code.authorizationEndpointRequest.client_id !== clientId) {
-    debug(`Client mismatch, expected ${code.authorizationEndpoint.client_id}, got ${clientId}`);
+  if (!reqBody.grant_type !== 'authorization_code') {
     ctx.status = 400;
-    return ctx.body = {error: 'invalid_grant'};
+    return ctx.body = {
+      error: 'unsupported_grant_type'
+    };
   }
 
-  // user is an object from `user-info.js`
-  const user = userInfo[code.user]
+  /**
+   * @type {string} auth- Like `Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW`
+   */
+  const authHeader = ctx.get('authorization');
 
-  if (!user) {
-    debug('Unknow user %s', user);
-    ctx.status = 500;
-    ctx.body = {error: `unknow_user`};
-    return;
+  const credentials = basicAuth.decode(authHeader);
+
+  if (!credentials) {
+    ctx.status = 400;
+    return ctx.body = {
+      error: 'invalid_client'
+    };
   }
 
-  debug('User: %O', user);
+  const authResult = await store.authenticateClient({
+    clientId: credentials[0],
+    clientSecret: credentials[1]
+  });
+
+  if (!authResult) {
+    ctx.status = 400;
+    return ctx.body = {
+      error: 'invalid_client'
+    }
+  }
+
+  if (!authResult.pwMatched || !authHeader.isActive) 
+  {
+    ctx.status = 400;
+    return ctx.body = {
+      error: 'invalid_grant'
+    };
+  }
+
+  const authorize = await store.loadAuthoirze(reqBody.code);
+
+  if (!authorize || authorize.isExpired || authorized.isUsed) {
+    ctx.status = 400;
+    return ctx.body = {
+      error: 'invalid_grant'
+    };
+  }
+
+  await store.setAuthorizeUsed(reqBody.code);
+
 
   // Generate access token
-  const accessToken = randstr(32);
+  const accessToken = await keyGen();
 
-  let cscope = null;
-  if (code.scope) {
-    cscope = code.scope.join(' ');
-  }
+  await store.saveToken({
+    accessToken,
+    scope: reqBody.scope || '',
+    expiresIn: 3600,
+    clientId: credentials[0]
+  });
 
-  // Save data
-  db.set(accessToken, {
-    client_id: clientId,
-    scope: cscope,
-    user: user.preferred_username
-  })
-  .write();
-
-  debug('Saved access token');
 
   // Send response
-  debug(`Issuing access token: access-token: ${accessToken}, clientId: ${clientId}, scope: ${cscope}`);
+  debug(`Issuing access token: access-token: ${accessToken}`);
+
   ctx.status = 200;
   return ctx.body = {
     access_token: accessToken,
     token_type: 'Bearer',
-    scope: cscope
+    scope: reqBody.scope,
+    expires_in: 3600
   };
 });
 

@@ -3,7 +3,7 @@
  * An application's access token is created and maintained by the authorization server.
  */
 const debug = require('debug')('db:personal-access');
-const sql = require('../utils/sql-trim');
+const sql = require('../util/sql-trim');
 
 class PersonalAccess {
   /**

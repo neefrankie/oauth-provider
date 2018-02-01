@@ -1,4 +1,4 @@
-const debug = require('debug')('server:start');
+const debug = require('debug')('routers:start');
 const path = require('path');
 const Koa = require('koa');
 const Router = require('koa-router');
@@ -6,14 +6,14 @@ const logger = require('koa-logger');
 const static = require('koa-static');
 const bodyParser = require('koa-bodyparser');
 
-const handleErrors = require('./controllers/handle-errors');
-const authorize = require('./controllers/authorize');
-const token = require('./controllers/token');
+const handleErrors = require('./routers/handle-errors');
+const authorize = require('./routers/authorize');
+const token = require('./routers/token');
 
 const appName = 'Developer Network';
 debug('booting %s', appName);
 
-const port = 8999;
+const port = 9000;
 const app = new Koa();
 const router = new Router();
 

@@ -1,5 +1,4 @@
-const AccessToken = require('./access-token');
-const Application = require('./application');
+const Storage = require('./storage');
 
 const DB = require('./db');
 const db = new DB();

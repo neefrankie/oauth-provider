@@ -1,14 +1,12 @@
 const debug = require('debug')('routers:authorize');
 const Koa = require('koa');
 const Router = require('koa-router');
-const render = require('../utils/render');
-const buildUrl = require('../utils/build-url')
+const render = require('../util/render');
 const {store} = require('../models/index');
 const buildUrl = require('../util/build-url');
 const keyGen = require('../util/key-gen');
 
 const router = new Router();
-
 
 router.get('/', async (ctx, next) => {
   /**
@@ -20,7 +18,7 @@ router.get('/', async (ctx, next) => {
    * @property {string?} state
    */  
   const reqBody = ctx.query
-  debug(query);
+  debug('Request: %O', reqBody);
 
   // If client_id is missing
   if (!reqBody.client_id) {
@@ -32,8 +30,15 @@ router.get('/', async (ctx, next) => {
     return ctx.body = 'invalid_request';
   }
 
+  if (reqBody.response_type !== 'code') {
+    return ctx.redirect(buildUrl(reqBody.redirect_uri, {
+      error: 'unsupported_response_type'
+    }));
+  }
+
   /**
    * @type {Object}
+   * @property {number} id
    * @property {string} clientName
    * @property {string} callbackUrl
    * @property {boolean} isActive
@@ -56,24 +61,15 @@ router.get('/', async (ctx, next) => {
   }
 
   // calbackUrl does not match redirect_uri
-  if (app.callbackUrl !== req.redirect_uri) {
+  if (app.callbackUrl !== reqBody.redirect_uri) {
     return ctx.body = 'unauthorized_client';
   }
 
-  if (reqBody !== 'code') {
-    return ctx.redirect(buildUrl(app.callbackUrl, {
-      error: 'unsupported_response_type'
-    }));
-  }
-
-  const authCode = await keyGen(10);
-
   ctx.state = {
     clientName: app.clientName, 
-    clientId: reqBody.client_id,
+    appId: app.id,
     redirectUri: reqBody.redirect_uri,
     state: reqBody.state,
-    authCode,
     scope: reqBody.scope
   };
 
@@ -98,14 +94,16 @@ router.post('/', async (ctx, next) => {
     }));
   }
 
+  const authCode = await keyGen(10);
+
   await store.saveAuthorize({
-    code: reqBody.authCode,
+    code: authCode,
     redirectUri: reqBody.redirectUri,
     state: reqBody.state,
-    appId: reqBody.clientId
+    appId: reqBody.appId
   });
 
-  return ctx.redirect(buildUrl(, reqBody.redirectUri, {
+  return ctx.redirect(buildUrl(reqBody.redirectUri, {
     state: reqBody.state,
     code: reqBody.authCode
   }));
