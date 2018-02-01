@@ -88,16 +88,18 @@ router.post('/', async (ctx, next) => {
    */
   const reqBody = ctx.request.body;
 
+  // TODO: state must be checked to prevent reuse.
+
   if (reqBody.deny) {
     return ctx.redirect(buildUrl(reqBody.redirectUri, {
       error: 'access_denied'
     }));
   }
 
-  const authCode = await keyGen(10);
+  const code = await keyGen(10);
 
   await store.saveAuthorize({
-    code: authCode,
+    code,
     redirectUri: reqBody.redirectUri,
     state: reqBody.state,
     appId: reqBody.appId
@@ -105,7 +107,7 @@ router.post('/', async (ctx, next) => {
 
   return ctx.redirect(buildUrl(reqBody.redirectUri, {
     state: reqBody.state,
-    code: reqBody.authCode
+    code
   }));
 });
 

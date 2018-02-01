@@ -30,10 +30,9 @@ OAuth Authorization Server
 
   <form class="form" action="/authorize" method="POST">
     <div>
-      <input type="hidden" name="clientId" value="{{clientId}}">
+      <input type="hidden" name="appId" value="{{appId}}">
       <input type="hidden" name="redirectUri" value="{{redirectUri}}">
-      <input type="hidden", value="{{state}}">
-      <input type="hidden" name="authCode" value="{{ authCode }}">
+      <input type="hidden" name="state" value="{{state}}">
     </div>
     
     <input type="submit" class="btn btn-success" name="approve" value="Approve">
