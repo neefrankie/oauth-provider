@@ -1,7 +1,7 @@
 {
   "name": "oauth-provider",
   "version": "1.0.0",
-  "description": "",
+  "description": "An OAuth 2.0 Demo",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,8 +10,8 @@
     "type": "git",
     "url": "git+https://github.com/neefrankie/oauth-provider.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "weiguo.ni",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/neefrankie/oauth-provider/issues"
   },
@@ -27,7 +27,6 @@
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "axios": "^0.17.1",
     "bootstrap": "^4.0.0",
     "chance": "^1.0.13",
     "got": "^8.0.3",
