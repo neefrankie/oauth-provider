@@ -10,7 +10,7 @@ const handleErrors = require('./routers/handle-errors');
 const authorize = require('./routers/authorize');
 const token = require('./routers/token');
 
-const appName = 'Developer Network';
+const appName = 'OAuth Provider';
 debug('booting %s', appName);
 
 const port = 9000;
