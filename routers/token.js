@@ -16,27 +16,26 @@ router.post('/', async function(ctx, next) {
    * @property {string?} redirect_uri
    */
   const reqBody = ctx.request.body;
+  debug('Request: %O', reqBody);
 
   if (!reqBody.code || !reqBody.redirect_uri) {
     ctx.status = 400;
+    debug('Request body does not have code or redirect_uri')
     return ctx.body = {
       error: 'invalid_request'
     };
   }
 
-  if (!reqBody.grant_type !== 'authorization_code') {
+  if (reqBody.grant_type !== 'authorization_code') {
+    debug('Request grant type is not authorization_code')
     ctx.status = 400;
     return ctx.body = {
       error: 'unsupported_grant_type'
     };
   }
 
-  /**
-   * @type {string} auth- Like `Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW`
-   */
-  const authHeader = ctx.get('authorization');
-
-  const credentials = basicAuth.decode(authHeader);
+  const credentials = basicAuth.decode(ctx.get('authorization'));
+  debug('Credentials: %O', credentials);
 
   if (!credentials) {
     ctx.status = 400;
@@ -45,39 +44,48 @@ router.post('/', async function(ctx, next) {
     };
   }
 
+  debug('Authenticating client....');
   const authResult = await store.authenticateClient({
     clientId: credentials[0],
     clientSecret: credentials[1]
   });
 
+  debug('Authentication result: %O', authResult);
+
   if (!authResult) {
+    debug('Authentication: no result found');
     ctx.status = 400;
     return ctx.body = {
       error: 'invalid_client'
     }
   }
 
-  if (!authResult.pwMatched || !authHeader.isActive) 
+  if (!authResult.pwMatched || !authResult.isActive) 
   {
+    debug('Authentication: password does not match or the client does not exist')
     ctx.status = 400;
     return ctx.body = {
       error: 'invalid_grant'
     };
   }
 
-  const authorize = await store.loadAuthoirze(reqBody.code);
+  debug('Loading previously session of authorization code')
+  const authorize = await store.loadAuthorize(reqBody.code);
 
-  if (!authorize || authorize.isExpired || authorized.isUsed) {
+  debug('Authorize: %O', authorize);
+  if (!authorize || authorize.isExpired || authorize.isUsed) {
+    debug('Authorize does not exist, or is expired, or is invalid');
     ctx.status = 400;
     return ctx.body = {
       error: 'invalid_grant'
     };
   }
 
+  debug('Flag the authorization code as used');
   await store.setAuthorizeUsed(reqBody.code);
 
-
   // Generate access token
+  debug('Generating access token...');
   const accessToken = await keyGen();
 
   await store.saveToken({
