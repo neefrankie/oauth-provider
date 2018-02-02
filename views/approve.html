@@ -2,33 +2,25 @@
 
 {% block content %}
   <h2>Approve this client?</h2>
-  <p>
-    <b>Client Name: </b>
-    <code>{{ clientName }}</code>
-  </p>
+  <ul>
+    <li>
+      <b>Client Name: </b>
+      <code>{{app.clientName}}</code>
+    </li>
+    {% for name, value in request %}
+    <li>
+      <b>{{name}}: </b>
+      <code>{{value}}</code>
+    </li>
+    {% endfor %}
+  </ul>
 
-  <p>
-    <b>Client ID: </b>
-    <code>{{clientId}}</code>
-  </p>
-  
-  <p>
-    <b>Scope: </b>
-    <code>{{scope}}</code>
-  </p>
-
-  {% if client.logoUri %}
-  <p>
-    <b>Logo: </b>
-    <img src="{{client.logoUri}}" alt="">
-  </p>
-  {% endif %}
 
   <form class="form" action="/authorize" method="POST">
     <div>
-      <input type="hidden" name="appId" value="{{appId}}">
-      <input type="hidden" name="redirectUri" value="{{redirectUri}}">
-      <input type="hidden" name="state" value="{{state}}">
+      <input type="hidden" name="appId" value="{{app.id}}">
+      <input type="hidden" name="redirectUri" value="{{client.redirect_uri}}">
+      <input type="hidden" name="state" value="{{client.state}}">
     </div>
     
     <input type="submit" class="btn btn-success" name="approve" value="Approve">

@@ -5,6 +5,7 @@ const Router = require('koa-router');
 const logger = require('koa-logger');
 const static = require('koa-static');
 const bodyParser = require('koa-bodyparser');
+const cors = require('kcors');
 
 const handleErrors = require('./routers/handle-errors');
 const authorize = require('./routers/authorize');
@@ -25,7 +26,11 @@ app.use(static(path.resolve(process.cwd(), 'node_modules')));
 app.use(static(path.resolve(process.cwd(), 'client')));
 
 app.use(bodyParser());
-
+app.use(cors());
+app.use(async (ctx, next) => {
+  debug('Request header: %O', ctx.header);
+  await next();
+});
 
 router.use('/authorize', authorize);
 router.use('/token', token);
