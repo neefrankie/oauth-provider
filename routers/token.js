@@ -7,30 +7,42 @@ const keyGen = require('../util/key-gen');
 
 const router = new Router();
 
+
 router.post('/', async function(ctx, next) {
   debug('Request token header: %O', ctx.header);
   /**
    * @type {object} reqBody
-   * @property {string} grant_type - must be `authorization_code`
+   * @property {string} grant_type - authorization_code | password | client_credentials
    * @property {string} code
    * @property {string?} redirect_uri
    */
   const reqBody = ctx.request.body;
   debug('Request: %O', reqBody);
 
+  switch (reqBody.grant_type) {
+    case 'authorization_code':
+      break;
+
+    case 'password':
+      break;
+
+    case 'client_credentials':
+      break;
+
+    default:
+      debug('Unsupported grant type');
+      ctx.status = 400;
+      return ctx.body = {
+        error: 'unsupported_grant_type'
+      };
+      break;
+  }
+
   if (!reqBody.code || !reqBody.redirect_uri) {
     ctx.status = 400;
     debug('Request body does not have code or redirect_uri')
     return ctx.body = {
       error: 'invalid_request'
-    };
-  }
-
-  if (reqBody.grant_type !== 'authorization_code') {
-    debug('Request grant type is not authorization_code')
-    ctx.status = 400;
-    return ctx.body = {
-      error: 'unsupported_grant_type'
     };
   }
 
