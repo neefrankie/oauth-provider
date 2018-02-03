@@ -20,7 +20,7 @@ const base64 = {
 exports.sign = function(o) {
   const header = {
     typ: 'JWT',
-    alg: 'none'
+    alg: 'HS256'
   };
   
   const payload = {
