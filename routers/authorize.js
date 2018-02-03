@@ -4,7 +4,7 @@ const Router = require('koa-router');
 const {store} = require('../models/index');
 const buildUrl = require('../util/build-url');
 const keyGen = require('../util/key-gen');
-const handleAuthCode = require('./handle-auth-code');
+const {authorize} = require('./handle-auth-code');
 const handleImplicit = require('./handle-implicit');
 
 const router = new Router();
@@ -33,7 +33,7 @@ router.get('/', async (ctx, next) => {
 
   switch (reqBody.response_type) {
     case 'code':
-      return handleAuthCode(ctx);
+      return authorize(ctx);
       break;
 
     case 'token':
@@ -44,7 +44,7 @@ router.get('/', async (ctx, next) => {
       const redirectTo = buildUrl(reqBody.redirect_uri, {
         error: 'unsupported_response_type'
       });
-      ctx.redirect(redirect_uri);
+      return ctx.redirect(redirect_uri);
       break;
   }
 });
@@ -64,9 +64,14 @@ router.post('/', async (ctx, next) => {
   // TODO: state must be checked to prevent reuse.
 
   if (reqBody.deny) {
-    return ctx.redirect(buildUrl(reqBody.redirectUri, {
-      error: 'access_denied'
-    }));
+    const redirectTo = buildUrl({
+      base: reqBody.redirectUri,
+      params: {
+        error: 'access_denied'
+      }
+    });
+    debug('Access denied. Redirect back: %s', redirectTo);
+    return ctx.redirect();
   }
 
   const code = await keyGen(10);
@@ -79,9 +84,12 @@ router.post('/', async (ctx, next) => {
     appId: reqBody.appId
   });
 
-  const redirectTo = buildUrl(reqBody.redirectUri, {
-    state: reqBody.state,
-    code
+  const redirectTo = buildUrl({
+    base: reqBody.redirectUri,
+    params: {
+      state: reqBody.state,
+      code
+    }
   });
 
   debug('Redirecting to callback url: %s', redirectTo);

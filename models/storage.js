@@ -84,9 +84,20 @@ class Storage {
     return results;
   }
 
+  /**
+   * @param {Object}
+   * @property {string} clientId
+   * @property {string} clientSecret
+   * @return {Object}
+   * @property {string} clientId
+   * @property {string} callbackUrl
+   * @property {boolean} isActive
+   * @property {boolean} pwMatched
+   */
   async authenticateClient({clientId, clientSecret}={}) {
     const query = sql`
-      SELECT callback_url AS callbackUrl,
+      SELECT client_id AS clientId,
+        callback_url AS callbackUrl,
         is_active AS isActive,
         client_secret = :clientSecret AS pwMatched
       FROM application
